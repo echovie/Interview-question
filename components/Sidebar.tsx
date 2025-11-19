@@ -27,6 +27,7 @@ interface SidebarProps {
   onSelectPoint: (pointId: string) => void
   onExpandTag?: (tagId: number) => void
   defaultOpenKeys?: string
+  title: string
 }
 
 type MenuItem = Required<MenuProps>['items'][number]
@@ -37,6 +38,7 @@ export default function Sidebar({
   onSelectPoint,
   onExpandTag,
   defaultOpenKeys = '',
+  title,
 }: SidebarProps) {
   const [openKeys, setOpenKeys] = useState<string[]>([])
   const [selectedKeys, setSelectedKeys] = useState<string[]>([])
@@ -109,7 +111,7 @@ export default function Sidebar({
   return (
     <div className="toc">
       <div className="header">
-        <h2>导航</h2>
+        <h2>{title}</h2>
       </div>
       <Menu
         mode="inline"

@@ -100,6 +100,7 @@ export default function Home() {
         selectedPointId={selectedPointId}
         onSelectPoint={setSelectedPointId}
         defaultOpenKeys={`tag-${tags?.[0]?.id}`}
+        title='知识点导航'
       />
       <div className="mainContent">
         <div className="copyButton">
