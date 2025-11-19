@@ -101,16 +101,17 @@ export default function Home() {
         selectedPointId={selectedPointId}
         onSelectPoint={setSelectedPointId}
       />
-      <div className={`${styles.mainContent}`}>
+      <div className={styles.mainContent}>
+        <div className={styles.copyButton}>
         <Button
           type="text"
           size="small"
           icon={copied ? <CheckOutlined /> : <CopyOutlined />}
           onClick={handleCopy}
-          className={styles.copyButton}
         >
           {copied ? '已复制' : '复制'}
         </Button>
+        </div>
         <MarkdownViewer
           content={markdownContent || ''}
           loading={loading}

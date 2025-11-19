@@ -1,15 +1,7 @@
-import detailData from './data.json'
+import detailData from '../../assets/detail.json'
 import { NextResponse } from 'next/server'
 
-type Detail = {
-  id: number
-  tagId: number
-  title: string
-  explanation: string
-  [key: string]: unknown
-}
-
-const detailMap = detailData as Record<string, Detail>
+const detailMap = detailData as Record<string, any>
 
 export async function GET(
   request: Request,

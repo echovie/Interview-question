@@ -11,9 +11,7 @@
 }
 
 .copyButton {
-  position: absolute;
-  right: 250px;
-  top: 30px;
-  padding: 10px;
+  display: flex;
+  justify-content: flex-end;
   cursor: pointer;
 }
