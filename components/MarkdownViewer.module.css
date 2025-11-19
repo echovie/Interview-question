@@ -1,0 +1,219 @@
+.container {
+  height: 100%;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.loading,
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #999;
+  font-size: 16px;
+}
+
+.content {
+  max-width: 900px;
+  margin: 0 auto;
+  line-height: 1.8;
+  color: #333;
+}
+
+.content :global(h1) {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 20px 0;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e0e0e0;
+  color: #222;
+}
+
+.content :global(h2) {
+  font-size: 26px;
+  font-weight: 600;
+  margin: 32px 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e8e8e8;
+  color: #333;
+}
+
+.content :global(h3) {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 24px 0 12px;
+  color: #444;
+}
+
+.content :global(h4) {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 20px 0 10px;
+  color: #555;
+}
+
+.content :global(p) {
+  margin: 16px 0;
+  line-height: 1.8;
+}
+
+.content :global(ul),
+.content :global(ol) {
+  margin: 16px 0;
+  padding-left: 30px;
+}
+
+.content :global(li) {
+  margin: 8px 0;
+  line-height: 1.8;
+}
+
+.content :global(blockquote) {
+  margin: 20px 0;
+  padding: 12px 20px;
+  border-left: 4px solid #2196f3;
+  background: #f5f5f5;
+  color: #666;
+}
+
+.content :global(blockquote p) {
+  margin: 0;
+}
+
+.content :global(img) {
+  max-width: 100%;
+  height: auto;
+  margin: 20px 0;
+  border-radius: 4px;
+}
+
+.pre {
+  background: #f5f5f5;
+  border-radius: 6px;
+  padding: 16px;
+  overflow-x: auto;
+  margin: 20px 0;
+  border: 1px solid #e0e0e0;
+  position: relative;
+}
+
+.pre :global(code) {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  display: block;
+  white-space: pre;
+}
+
+/* 代码块卡片容器 */
+.codeBlockCard {
+  margin: 20px 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+  background: #1e1e1e;
+}
+
+.codeBlockCard :global(.ant-card-body) {
+  padding: 0 !important;
+}
+
+/* 代码块头部 */
+.codeBlockHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: #252526;
+  border-bottom: 1px solid #3e3e42;
+}
+
+.codeBlockLanguage {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 复制按钮 */
+.copyButton {
+  color: #cccccc;
+  border: none;
+  padding: 0;
+  height: auto;
+}
+
+.copyButton:hover {
+  color: #ffffff;
+  background: transparent;
+}
+
+.copyButton:focus {
+  color: #ffffff;
+  background: transparent;
+}
+
+/* 代码块容器 */
+.codeBlockContainer {
+  overflow-x: auto;
+  background: #1e1e1e;
+}
+
+.codeBlockContainer :global(pre) {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.codeBlockContainer :global(code) {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace !important;
+}
+
+.inlineCode {
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  color: #e83e8c;
+}
+
+.content :global(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+.content :global(th),
+.content :global(td) {
+  border: 1px solid #e0e0e0;
+  padding: 12px;
+  text-align: left;
+}
+
+.content :global(th) {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+.content :global(a) {
+  color: #2196f3;
+  text-decoration: none;
+}
+
+.content :global(a:hover) {
+  text-decoration: underline;
+}
+
+.content :global(hr) {
+  border: none;
+  border-top: 1px solid #e0e0e0;
+  margin: 30px 0;
+}
+
