@@ -109,7 +109,7 @@ export default function Sidebar({
   return (
     <div className="toc">
       <div className="header">
-        <h2>问题导航</h2>
+        <h2>导航</h2>
       </div>
       <Menu
         mode="inline"
