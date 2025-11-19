@@ -26,6 +26,7 @@ interface SidebarProps {
   selectedPointId: string | null
   onSelectPoint: (pointId: string) => void
   onExpandTag?: (tagId: number) => void
+  defaultOpenKeys?: string
 }
 
 type MenuItem = Required<MenuProps>['items'][number]
@@ -35,16 +36,16 @@ export default function Sidebar({
   selectedPointId,
   onSelectPoint,
   onExpandTag,
+  defaultOpenKeys = '',
 }: SidebarProps) {
   const [openKeys, setOpenKeys] = useState<string[]>([])
   const [selectedKeys, setSelectedKeys] = useState<string[]>([])
 
-  // 自动展开包含选中知识点的标签
   useEffect(() => {
-    if (tags.length > 0) {
-      setOpenKeys([`tag-${tags[0].id}`])
+    if (defaultOpenKeys) {
+      setOpenKeys([defaultOpenKeys])
     }
-  }, [tags])
+  }, [defaultOpenKeys])
 
   useEffect(() => {
     if (selectedPointId) {
@@ -100,7 +101,9 @@ export default function Sidebar({
       }
     }
 
-    setOpenKeys(nextKeys)
+    setTimeout(() => {
+      setOpenKeys(nextKeys)
+    }, 100)
   }
 
   return (

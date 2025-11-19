@@ -169,6 +169,7 @@ export default function Home() {
         selectedPointId={selectedPointId}
         onSelectPoint={setSelectedPointId}
         onExpandTag={loadTagPoints}
+        defaultOpenKeys={`tag-${tags?.[0]?.id}`}
       />
       <div className="mainContent">
         <div className="copyButton">

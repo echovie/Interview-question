@@ -34,7 +34,7 @@ interface Detail {
 
 export default function Home() {
   const [tags, setTags] = useState<Tag[]>([])
-  const [selectedPointId, setSelectedPointId] = useState<number | null>(null)
+  const [selectedPointId, setSelectedPointId] = useState<string | null>(null)
   const [markdownContent, setMarkdownContent] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [activeHeadingId, setActiveHeadingId] = useState<string>('')
@@ -96,9 +96,10 @@ export default function Home() {
   return (
     <div className="container">
       <Sidebar
-        tags={tags}
+        tags={tags as any[]}
         selectedPointId={selectedPointId}
         onSelectPoint={setSelectedPointId}
+        defaultOpenKeys={`tag-${tags?.[0]?.id}`}
       />
       <div className="mainContent">
         <div className="copyButton">
