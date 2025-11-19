@@ -1,9 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-// TODO: Replace with your own cookie string
-const VID = '9';
-const COOKIE = "csrfToken=MNDcwxJT6MMjATBkX66W70BG; Hm_lvt_dd94ee499774a75a66365f9ea9d0b8fd=1762414188,1763474635; HMACCOUNT=E08D7D7FD9DAA00B; utoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXN0b21lcktleSI6ImN1XzQ1OGNmMDk3LTZhM2UtNDk5Zi1hMTRlLTc4NTJjNjQ0NDNkMiIsInZpZCI6OSwiaWF0IjoxNzYzNDc0NjY4LCJleHAiOjE3NjQwNzk0Njh9.fMQK2Q-R8i7ZMp9Vv0YOiZbSr7ONOO6kYKBzgagEMQY; utoken.sig=U6YASexcdGYh3xXgExpt6sCZOZDuvBx1hJ-QBhW8EYI; Hm_lpvt_dd94ee499774a75a66365f9ea9d0b8fd=1763540662";
+// TODO: 需要从环境变量中获取
+// const VID = process.env.NEXT_PUBLIC_VID;
+// const COOKIE = process.env.NEXT_PUBLIC_COOKIE;
+const VID =9
+const COOKIE ="csrfToken=MNDcwxJT6MMjATBkX66W70BG; Hm_lvt_dd94ee499774a75a66365f9ea9d0b8fd=1762414188,1763474635; HMACCOUNT=E08D7D7FD9DAA00B; utoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXN0b21lcktleSI6ImN1XzQ1OGNmMDk3LTZhM2UtNDk5Zi1hMTRlLTc4NTJjNjQ0NDNkMiIsInZpZCI6OSwiaWF0IjoxNzYzNDc0NjY4LCJleHAiOjE3NjQwNzk0Njh9.fMQK2Q-R8i7ZMp9Vv0YOiZbSr7ONOO6kYKBzgagEMQY; utoken.sig=U6YASexcdGYh3xXgExpt6sCZOZDuvBx1hJ-QBhW8EYI; Hm_lpvt_dd94ee499774a75a66365f9ea9d0b8fd=1763540662"
 
 const OUTPUT_FILE = path.resolve(process.cwd(), 'app/api/assets/detail.json');
 const MENU_FILE = path.resolve(process.cwd(), 'app/api/assets/menu.json');

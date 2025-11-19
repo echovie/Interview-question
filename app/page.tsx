@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import Sidebar from '@/components/Sidebar'
 import MarkdownViewer from '@/components/MarkdownViewer'
 import TableOfContents from '@/components/TableOfContents'
-import styles from './page.module.css'
 import { Button, Tag, message } from 'antd'
 import { CopyOutlined, CheckOutlined } from '@ant-design/icons'
 
@@ -95,14 +94,14 @@ export default function Home() {
   }
 
   return (
-    <div className={styles.container}>
+    <div className="container">
       <Sidebar
         tags={tags}
         selectedPointId={selectedPointId}
         onSelectPoint={setSelectedPointId}
       />
-      <div className={styles.mainContent}>
-        <div className={styles.copyButton}>
+      <div className="mainContent">
+        <div className="copyButton">
         <Button
           type="text"
           size="small"
