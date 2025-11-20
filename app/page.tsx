@@ -4,8 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import Sidebar from '@/components/Sidebar'
 import MarkdownViewer from '@/components/MarkdownViewer'
 import TableOfContents from '@/components/TableOfContents'
-import { Button, Tag, message } from 'antd'
-import { CopyOutlined, CheckOutlined } from '@ant-design/icons'
+import { Tag } from 'antd'
 
 interface Tag {
   id: number
@@ -56,10 +55,10 @@ export default function Home() {
     }
   }, [])
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem('readPointIds', JSON.stringify(Array.from(readPointIds)))
-  }, [readPointIds])
+  const setReadPointIdsToLocal = (pointIds: Set<string>) => {
+    window.localStorage.setItem('readPointIds', JSON.stringify(Array.from(pointIds)))
+    setReadPointIds(pointIds)
+  }
 
   const flatPoints = useMemo(() => {
     return tags.flatMap(tag =>
@@ -83,14 +82,13 @@ export default function Home() {
 
   const handleReachedEnd = useCallback(() => {
     if (!selectedPointId) return
-    setReadPointIds(prev => {
-      if (prev.has(String(selectedPointId))) {
-        return prev
+      if (readPointIds.has(String(selectedPointId))) {
+        return readPointIds
       }
-      const next = new Set(prev)
+      const next = new Set(readPointIds)
       next.add(String(selectedPointId))
-      return next
-    })
+
+      setReadPointIdsToLocal(next)
   }, [selectedPointId])
 
   // 加载标签列表

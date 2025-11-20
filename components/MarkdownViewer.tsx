@@ -231,13 +231,12 @@ function MarkdownViewer({
         </ReactMarkdown>
       </div>
       <div className={styles.navigationBottom}>
-        <Button size="small" onClick={onPrev} disabled={!hasPrev}>
+        <Button  onClick={onPrev} disabled={!hasPrev}>
           上一页
         </Button>
         <div>
           <Button
             type="text"
-            size="small"
             icon={copied ? <CheckOutlined /> : <CopyOutlined />}
             onClick={handleCopy}
           >
@@ -245,7 +244,6 @@ function MarkdownViewer({
           </Button>
         
           <Button
-            size="small"
             type="primary"
             onClick={onNext}
             disabled={!hasNext}
