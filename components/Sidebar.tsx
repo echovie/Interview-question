@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Menu, Layout, Badge, Spin } from 'antd'
+import { useState, useEffect, useMemo } from 'react'
+import { Menu, Layout, Badge, Spin, Tooltip } from 'antd'
 import type { MenuProps } from 'antd'
 
 const { Sider } = Layout
@@ -28,6 +28,7 @@ interface SidebarProps {
   onExpandTag?: (tagId: number) => void
   defaultOpenKeys?: string
   title: string
+  readPointIds?: Set<string> | string[]
 }
 
 type MenuItem = Required<MenuProps>['items'][number]
@@ -39,9 +40,15 @@ export default function Sidebar({
   onExpandTag,
   defaultOpenKeys = '',
   title,
+  readPointIds,
 }: SidebarProps) {
   const [openKeys, setOpenKeys] = useState<string[]>([])
   const [selectedKeys, setSelectedKeys] = useState<string[]>([])
+
+  const readSet = useMemo(() => {
+    if (!readPointIds) return new Set<string>()
+    return readPointIds instanceof Set ? readPointIds : new Set(readPointIds.map(String))
+  }, [readPointIds])
 
   useEffect(() => {
     if (defaultOpenKeys) {
@@ -79,10 +86,20 @@ export default function Sidebar({
         )}
       </div>
     ),
-    children: (tag.pointList ?? []).map(point => ({
-      key: `point-${point.tagPointId}`,
-      label: <span>{point.title}</span>,
-    })),
+    children: (tag.pointList ?? []).map(point => {
+        const isRead = readSet.has(String(point.tagPointId))
+        return {
+          key: `point-${point.tagPointId}`,
+          label: (
+            <div className="point-item">
+              <Tooltip title={point.title}>
+                <span>{point.title}</span>
+              </Tooltip>
+              {isRead && <span className="point-read-flag">已读</span>}
+            </div>
+          ),
+        }
+      }),
   }))
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {

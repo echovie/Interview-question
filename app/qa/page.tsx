@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Sidebar from '@/components/Sidebar'
 import MarkdownViewer from '@/components/MarkdownViewer'
 import TableOfContents from '@/components/TableOfContents'
-import { Button, Tag, message } from 'antd'
-import { CopyOutlined, CheckOutlined } from '@ant-design/icons'
+import { Tag } from 'antd'
 
 interface Point {
   tagPointId: string
@@ -39,7 +38,27 @@ export default function Home() {
   const [markdownContent, setMarkdownContent] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [activeHeadingId, setActiveHeadingId] = useState<string>('')
-  const [copied, setCopied] = useState(false)
+ 
+  const flatPoints = useMemo(() => {
+    return tags.flatMap(tag =>
+      (tag.pointList ?? []).map(point => ({
+        ...point,
+        tagId: tag.id,
+      }))
+    )
+  }, [tags])
+
+  const currentIndex = useMemo(() => {
+    if (!selectedPointId) return -1
+    return flatPoints.findIndex(point => point.tagPointId === selectedPointId)
+  }, [flatPoints, selectedPointId])
+
+  const prevPointId = currentIndex > 0 ? flatPoints[currentIndex - 1].tagPointId : null
+  const nextPointId =
+    currentIndex >= 0 && currentIndex < flatPoints.length - 1
+      ? flatPoints[currentIndex + 1].tagPointId
+      : null
+
 
   const loadTagPoints = useCallback(
     async (tagId: number, options: { autoSelectFirst?: boolean } = {}) => {
@@ -139,7 +158,7 @@ export default function Home() {
         .then(data => {
           if (data.code === 0) {
             const { title, explanation, testPoint } = data.data.detail || {};
-            setMarkdownContent(`# ${title}\n\n${explanation}\n\n# 常见考点\n\n${testPoint}`)
+            setMarkdownContent(`# ${title}\n\n${explanation}`)
           }
           setLoading(false)
         })
@@ -150,18 +169,6 @@ export default function Home() {
     }
   }, [selectedPointId])
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(markdownContent)
-      setCopied(true)
-      message.success('代码已复制到剪贴板')
-      setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-      console.error('复制失败:', err)
-      message.error('复制失败，请重试')
-    }
-  }
-
   return (
     <div className="container">
       <Sidebar
@@ -171,22 +178,17 @@ export default function Home() {
         onExpandTag={loadTagPoints}
         defaultOpenKeys={`tag-${tags?.[0]?.id}`}
         title='问题导航'
+        readPointIds={new Set()}
       />
       <div className="mainContent">
-        <div className="copyButton">
-        <Button
-          type="text"
-          size="small"
-          icon={copied ? <CheckOutlined /> : <CopyOutlined />}
-          onClick={handleCopy}
-        >
-          {copied ? '已复制' : '复制'}
-        </Button>
-        </div>
         <MarkdownViewer
           content={markdownContent || ''}
           loading={loading}
           onHeadingChange={setActiveHeadingId}
+          hasPrev={Boolean(prevPointId)}
+          hasNext={Boolean(nextPointId)}
+          onPrev={() => prevPointId && setSelectedPointId(prevPointId)}
+          onNext={() => nextPointId && setSelectedPointId(nextPointId)}
         />
       </div>
       <TableOfContents

@@ -15,15 +15,27 @@ interface MarkdownViewerProps {
   content: string
   loading: boolean
   onHeadingChange: (headingId: string) => void
+  onReachedEnd?: () => void
+  hasPrev?: boolean
+  hasNext?: boolean
+  onPrev?: () => void
+  onNext?: () => void
 }
 
 function MarkdownViewer({
   content,
   loading,
   onHeadingChange,
+  onReachedEnd,
+  hasPrev,
+  hasNext,
+  onPrev,
+  onNext,
 }: MarkdownViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const observerRef = useRef<IntersectionObserver | null>(null)
+  const hasReachedBottomRef = useRef(false)
+  const [copied, setCopied] = useState(false)
 
   // 生成标题ID的工具函数（与TableOfContents保持一致）
   const generateHeadingId = (text: string): string => {
@@ -115,6 +127,46 @@ function MarkdownViewer({
     }
   }, [content, onHeadingChange])
 
+  useEffect(() => {
+    hasReachedBottomRef.current = false
+  }, [content])
+
+  useEffect(() => {
+    if (!onReachedEnd) {
+      return
+    }
+    const container = containerRef.current
+    if (!container) {
+      return
+    }
+
+    const handleScroll = () => {
+      if (hasReachedBottomRef.current) return
+      const { scrollTop, clientHeight, scrollHeight } = container
+      if (scrollTop + clientHeight >= scrollHeight - 40) {
+        hasReachedBottomRef.current = true
+        onReachedEnd()
+      }
+    }
+
+    container.addEventListener('scroll', handleScroll)
+    return () => {
+      container.removeEventListener('scroll', handleScroll)
+    }
+  }, [onReachedEnd, content])
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(content)
+      setCopied(true)
+      message.success('代码已复制到剪贴板')
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('复制失败:', err)
+      message.error('复制失败，请重试')
+    }
+  }
+
   if (loading) {
     return (
       <div className={styles.container}>
@@ -177,6 +229,30 @@ function MarkdownViewer({
         >
           {content}
         </ReactMarkdown>
+      </div>
+      <div className={styles.navigationBottom}>
+        <Button size="small" onClick={onPrev} disabled={!hasPrev}>
+          上一页
+        </Button>
+        <div>
+          <Button
+            type="text"
+            size="small"
+            icon={copied ? <CheckOutlined /> : <CopyOutlined />}
+            onClick={handleCopy}
+          >
+            {copied ? '已复制' : '复制'}
+          </Button>
+        
+          <Button
+            size="small"
+            type="primary"
+            onClick={onNext}
+            disabled={!hasNext}
+          >
+            下一页
+          </Button>
+        </div>
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Sidebar from '@/components/Sidebar'
 import MarkdownViewer from '@/components/MarkdownViewer'
 import TableOfContents from '@/components/TableOfContents'
@@ -38,7 +38,60 @@ export default function Home() {
   const [markdownContent, setMarkdownContent] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [activeHeadingId, setActiveHeadingId] = useState<string>('')
-  const [copied, setCopied] = useState(false)
+  const [readPointIds, setReadPointIds] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const stored = window.localStorage.getItem('readPointIds')
+    if (!stored) return
+
+    try {
+      const parsed = JSON.parse(stored)
+      if (Array.isArray(parsed)) {
+        setReadPointIds(new Set(parsed.map(String)))
+      }
+    } catch (error) {
+      console.error('Failed to parse readPointIds from localStorage:', error)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem('readPointIds', JSON.stringify(Array.from(readPointIds)))
+  }, [readPointIds])
+
+  const flatPoints = useMemo(() => {
+    return tags.flatMap(tag =>
+      (tag.pointList ?? []).map(point => ({
+        ...point,
+        tagId: tag.id,
+      }))
+    )
+  }, [tags])
+
+  const currentIndex = useMemo(() => {
+    if (!selectedPointId) return -1
+    return flatPoints.findIndex(point => String(point.tagPointId) === String(selectedPointId))
+  }, [flatPoints, selectedPointId])
+
+  const prevPointId = currentIndex > 0 ? String(flatPoints[currentIndex - 1].tagPointId) : null
+  const nextPointId =
+    currentIndex >= 0 && currentIndex < flatPoints.length - 1
+      ? String(flatPoints[currentIndex + 1].tagPointId)
+      : null
+
+  const handleReachedEnd = useCallback(() => {
+    if (!selectedPointId) return
+    setReadPointIds(prev => {
+      if (prev.has(String(selectedPointId))) {
+        return prev
+      }
+      const next = new Set(prev)
+      next.add(String(selectedPointId))
+      return next
+    })
+  }, [selectedPointId])
 
   // 加载标签列表
   useEffect(() => {
@@ -51,7 +104,7 @@ export default function Home() {
           // 默认选择第一个知识点
           if (data.data.list.length > 0 && data.data.list[0].pointList.length > 0) {
             const firstPointId = data.data.list[0].pointList[0].tagPointId
-            setSelectedPointId(firstPointId)
+            setSelectedPointId(String(firstPointId))
           }
         }
       } catch (error) {
@@ -81,17 +134,7 @@ export default function Home() {
     }
   }, [selectedPointId])
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(markdownContent)
-      setCopied(true)
-      message.success('代码已复制到剪贴板')
-      setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-      console.error('复制失败:', err)
-      message.error('复制失败，请重试')
-    }
-  }
+
 
   return (
     <div className="container">
@@ -101,22 +144,21 @@ export default function Home() {
         onSelectPoint={setSelectedPointId}
         defaultOpenKeys={`tag-${tags?.[0]?.id}`}
         title='知识点导航'
+        readPointIds={readPointIds}
       />
       <div className="mainContent">
         <div className="copyButton">
-        <Button
-          type="text"
-          size="small"
-          icon={copied ? <CheckOutlined /> : <CopyOutlined />}
-          onClick={handleCopy}
-        >
-          {copied ? '已复制' : '复制'}
-        </Button>
+      
         </div>
         <MarkdownViewer
           content={markdownContent || ''}
           loading={loading}
           onHeadingChange={setActiveHeadingId}
+          onReachedEnd={handleReachedEnd}
+          hasPrev={Boolean(prevPointId)}
+          hasNext={Boolean(nextPointId)}
+          onPrev={() => prevPointId && setSelectedPointId(prevPointId)}
+          onNext={() => nextPointId && setSelectedPointId(nextPointId)}
         />
       </div>
       <TableOfContents
