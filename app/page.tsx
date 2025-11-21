@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import MarkdownViewer from '@/components/MarkdownViewer'
 import TableOfContents from '@/components/TableOfContents'
-import { Tag } from 'antd'
 
 interface Tag {
   id: number
@@ -38,6 +38,9 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [activeHeadingId, setActiveHeadingId] = useState<string>('')
   const [readPointIds, setReadPointIds] = useState<Set<string>>(new Set())
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -80,16 +83,75 @@ export default function Home() {
       ? String(flatPoints[currentIndex + 1].tagPointId)
       : null
 
+  const selectedTagKey = useMemo(() => {
+    if (!selectedPointId) return ''
+    const tag = tags.find(t => (t.pointList ?? []).some(point => String(point.tagPointId) === String(selectedPointId)))
+    return tag ? `tag-${tag.id}` : ''
+  }, [tags, selectedPointId])
+
   const handleReachedEnd = useCallback(() => {
     if (!selectedPointId) return
-      if (readPointIds.has(String(selectedPointId))) {
-        return readPointIds
-      }
-      const next = new Set(readPointIds)
-      next.add(String(selectedPointId))
+    if (readPointIds.has(String(selectedPointId))) {
+      return
+    }
+    const next = new Set(readPointIds)
+    next.add(String(selectedPointId))
+    setReadPointIdsToLocal(next)
+  }, [selectedPointId, readPointIds])
 
-      setReadPointIdsToLocal(next)
-  }, [selectedPointId])
+  const updateUrlWithPointId = useCallback(
+    (pointId: string) => {
+      if (searchParams.get('id') === pointId) {
+        return
+      }
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('id', pointId)
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    },
+    [router, pathname, searchParams]
+  )
+
+  const handleSelectPoint = useCallback(
+    (pointId: string) => {
+      setSelectedPointId(pointId)
+      updateUrlWithPointId(pointId)
+    },
+    [updateUrlWithPointId]
+  )
+
+  useEffect(() => {
+    if (!tags.length) return
+    const allPointList = tags.flatMap(tag => tag.pointList ?? [])
+    if (!allPointList.length) return
+
+    const pointIdFromUrl = searchParams.get('id')
+    const matchedPoint = pointIdFromUrl
+      ? allPointList.find(point => String(point.tagPointId) === String(pointIdFromUrl))
+      : null
+
+    if (matchedPoint) {
+      setSelectedPointId(String(matchedPoint.tagPointId))
+      return
+    }
+
+    const fallbackId = String(allPointList[0].tagPointId)
+    setSelectedPointId(fallbackId)
+    if (pointIdFromUrl !== fallbackId) {
+      updateUrlWithPointId(fallbackId)
+    }
+  }, [tags, searchParams, updateUrlWithPointId])
+
+  const handlePrev = useCallback(() => {
+    if (prevPointId) {
+      handleSelectPoint(prevPointId)
+    }
+  }, [prevPointId, handleSelectPoint])
+
+  const handleNext = useCallback(() => {
+    if (nextPointId) {
+      handleSelectPoint(nextPointId)
+    }
+  }, [nextPointId, handleSelectPoint])
 
   // 加载标签列表
   useEffect(() => {
@@ -99,11 +161,6 @@ export default function Home() {
         const data = await response.json()
         if (data.code === 0) {
           setTags(data.data.list)
-          // 默认选择第一个知识点
-          if (data.data.list.length > 0 && data.data.list[0].pointList.length > 0) {
-            const firstPointId = data.data.list[0].pointList[0].tagPointId
-            setSelectedPointId(String(firstPointId))
-          }
         }
       } catch (error) {
         console.error('Failed to fetch tags:', error)
@@ -139,9 +196,9 @@ export default function Home() {
       <Sidebar
         tags={tags as any[]}
         selectedPointId={selectedPointId}
-        onSelectPoint={setSelectedPointId}
-        defaultOpenKeys={`tag-${tags?.[0]?.id}`}
-        title='知识点导航'
+        onSelectPoint={handleSelectPoint}
+        defaultOpenKeys={selectedTagKey}
+        title="知识点导航"
         readPointIds={readPointIds}
       />
       <div className="mainContent">
@@ -155,8 +212,8 @@ export default function Home() {
           onReachedEnd={handleReachedEnd}
           hasPrev={Boolean(prevPointId)}
           hasNext={Boolean(nextPointId)}
-          onPrev={() => prevPointId && setSelectedPointId(prevPointId)}
-          onNext={() => nextPointId && setSelectedPointId(nextPointId)}
+        onPrev={handlePrev}
+        onNext={handleNext}
         />
       </div>
       <TableOfContents

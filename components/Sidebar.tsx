@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Menu, Layout, Badge, Spin, Tooltip } from 'antd'
 import type { MenuProps } from 'antd'
 
@@ -19,6 +19,7 @@ interface Tag {
   tagName: string
   pointCount: number
   pointList: Point[]
+  isLoading?: boolean
 }
 
 interface SidebarProps {
@@ -44,6 +45,7 @@ export default function Sidebar({
 }: SidebarProps) {
   const [openKeys, setOpenKeys] = useState<string[]>([])
   const [selectedKeys, setSelectedKeys] = useState<string[]>([])
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const readSet = useMemo(() => {
     if (!readPointIds) return new Set<string>()
@@ -58,10 +60,34 @@ export default function Sidebar({
 
   useEffect(() => {
     if (selectedPointId) {
-      const tagWithSelectedPoint = selectedKeys.some(key => key === `point-${selectedPointId}`)
-      if (!tagWithSelectedPoint) {
+      const isSelected = selectedKeys.some(key => key === `point-${selectedPointId}`)
+      if (!isSelected) {
         setSelectedKeys([`point-${selectedPointId}`])
       }
+    } else {
+      setSelectedKeys([])
+    }
+  }, [selectedPointId, selectedKeys])
+
+  useEffect(() => {
+    if (!selectedPointId) return
+    const parentTag = tags.find(tag =>
+      (tag.pointList ?? []).some(point => String(point.tagPointId) === String(selectedPointId))
+    )
+    if (!parentTag) return
+    const parentKey = `tag-${parentTag.id}`
+    setOpenKeys(prev => {
+      if (prev.includes(parentKey)) {
+        return prev
+      }
+      return [...prev, parentKey]
+    })
+  }, [selectedPointId, tags])
+
+  useEffect(() => {
+    const selectedNode = containerRef.current?.querySelector('.ant-menu-item-selected') as HTMLElement | null
+    if (selectedNode) {
+      selectedNode.scrollIntoView({ block: 'center', behavior: 'smooth' })
     }
   }, [selectedPointId])
 
@@ -126,7 +152,7 @@ export default function Sidebar({
   }
 
   return (
-    <div className="toc">
+    <div className="toc" ref={containerRef}>
       <div className="header">
         <h2>{title}</h2>
       </div>
