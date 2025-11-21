@@ -359,62 +359,17 @@ function CodeBlock({ language, codeString }: CodeBlockProps) {
   )
 }
 
-const useFetchImage = (src: any, headers = {}) => {
-  const [imageUrl, setImageUrl] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-
-  useEffect(() => {
-    const fetchImage = async () => {
-      try {
-        setIsLoading(true);
-        setHasError(false);
-
-        const response = await fetch(src, {
-          headers: {
-            'Authorization': 'Bearer your-token',
-            ...headers,
-          },
-        });
-
-        if (!response.ok) throw new Error('Image fetch failed');
-
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        setImageUrl(url);
-        
-      } catch (error) {
-        setHasError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (src) fetchImage();
-
-    return () => {
-      if (imageUrl) URL.revokeObjectURL(imageUrl);
-    };
-  }, [src]);
-
-  return { imageUrl, isLoading, hasError };
-};
-
 // 使用组件
 const ImageWithPreview = ({ src, alt, title }: any) => {
-  const { imageUrl, isLoading, hasError } = useFetchImage(src, {
-    'Authorization': 'Bearer token',
-    'Custom-Header': 'value'
-  });
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
-  if (isLoading) return <div>Loading...</div>;
   if (hasError) return <div>Error loading image</div>;
 
   return (
     <>
       <img
-        src={imageUrl}
+        src={`/api/image-proxy?url=${src}`}
         alt={alt}
         title={title}
         onClick={() => setIsPreviewOpen(true)}
@@ -428,7 +383,7 @@ const ImageWithPreview = ({ src, alt, title }: any) => {
       
       {isPreviewOpen && (
         <div className="preview-overlay" onClick={() => setIsPreviewOpen(false)}>
-          <img src={imageUrl} alt={alt} className="preview-image" />
+          <img src={`/api/image-proxy?url=${src}`} alt={alt} className="preview-image" />
         </div>
       )}
     </>
