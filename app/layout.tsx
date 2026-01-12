@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import 'antd/dist/reset.css'
 import './globals.css'
+import { Suspense } from 'react'
 
 export const metadata: Metadata = {
   title: '前端面试学习平台',
@@ -14,7 +15,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN">
-      <body>{children}</body>
+      <body>
+        <Suspense>
+          {children}
+        </Suspense>
+      </body>
     </html>
   )
 }

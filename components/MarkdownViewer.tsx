@@ -10,6 +10,7 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { Button, Card, Tag, message } from 'antd'
 import { CopyOutlined, CheckOutlined } from '@ant-design/icons'
 import styles from './MarkdownViewer.module.css'
+import Image from 'next/image'
 
 interface MarkdownViewerProps {
   content: string
@@ -368,12 +369,14 @@ const ImageWithPreview = ({ src, alt, title }: any) => {
 
   return (
     <>
-      <img
+      <Image
         src={`/api/image-proxy?url=${src}`}
         alt={alt}
         title={title}
         onClick={() => setIsPreviewOpen(true)}
         onError={() => setHasError(true)}
+        width={1000}
+        height={1000}
         style={{
           cursor: 'zoom-in',
           maxWidth: '100%',
@@ -383,7 +386,7 @@ const ImageWithPreview = ({ src, alt, title }: any) => {
       
       {isPreviewOpen && (
         <div className="preview-overlay" onClick={() => setIsPreviewOpen(false)}>
-          <img src={`/api/image-proxy?url=${src}`} alt={alt} className="preview-image" />
+          <Image src={`/api/image-proxy?url=${src}`} alt={alt} className="preview-image" width={1000} height={1000}/>
         </div>
       )}
     </>

@@ -192,7 +192,7 @@ export default function Home() {
 
 
   return (
-    <div className="container">
+      <div className="container">
       <Sidebar
         tags={tags as any[]}
         selectedPointId={selectedPointId}

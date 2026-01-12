@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  interview-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: interview-app
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=production
+      - PORT=8000
+    restart: unless-stopped
+    networks:
+      - interview-network
+
+networks:
+  interview-network:
+    driver: bridge
+
