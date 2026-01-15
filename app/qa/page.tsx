@@ -14,6 +14,24 @@ export default function Home() {
   // 从 URL 参数中获取 id
   const pointId = searchParams.get('id')
 
+  // 记录已看过的题目到本地存储
+  useEffect(() => {
+    if (!pointId || typeof window === 'undefined') return
+
+    try {
+      const stored = window.localStorage.getItem('viewedQuestionIds')
+      const viewedIds = stored ? JSON.parse(stored) : []
+      const viewedSet = new Set(viewedIds.map(String))
+      
+      if (!viewedSet.has(String(pointId))) {
+        viewedSet.add(String(pointId))
+        window.localStorage.setItem('viewedQuestionIds', JSON.stringify(Array.from(viewedSet)))
+      }
+    } catch (error) {
+      console.error('Failed to save viewed question to localStorage:', error)
+    }
+  }, [pointId])
+
   // 根据 URL 中的 id 加载详情
   useEffect(() => {
     if (pointId) {

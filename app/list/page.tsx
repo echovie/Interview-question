@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Table, Space, Radio, Tag as AntTag, Rate, Card } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import { CheckCircleOutlined } from '@ant-design/icons'
 
 interface Question {
   tagPointId: string
@@ -20,17 +21,67 @@ interface Tag {
 }
 
 export default function QuestionListPage() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  
   const [questions, setQuestions] = useState<Question[]>([])
   const [tags, setTags] = useState<Tag[]>([])
   const [loading, setLoading] = useState(false)
   const [total, setTotal] = useState(0)
+  const [viewedQuestionIds, setViewedQuestionIds] = useState<Set<string>>(new Set())
 
-  // 筛选条件
-  const [exerciseCate, setExerciseCate] = useState<string>('0') // 题库范围
-  const [tagId, setTagId] = useState<string>('') // 题目标签
-  const [orderBy, setOrderBy] = useState<string>('default') // 排序字段
-  const [order, setOrder] = useState<string>('desc') // 排序方向
-  const [difficulty, setDifficulty] = useState<string>('') // 题目难度
+  // 从URL参数读取筛选条件
+  const exerciseCate = searchParams.get('exerciseCate') || '0'
+  const tagId = searchParams.get('tagId') || ''
+  const orderBy = searchParams.get('orderBy') || 'default'
+  const order = searchParams.get('order') || 'desc'
+  const difficulty = searchParams.get('difficulty') || ''
+  const currentPage = Number(searchParams.get('page')) || 1
+  const pageSize = Number(searchParams.get('pageSize')) || 10
+
+  // 从本地存储加载已看过的题目
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const stored = window.localStorage.getItem('viewedQuestionIds')
+    if (!stored) return
+
+    try {
+      const parsed = JSON.parse(stored)
+      if (Array.isArray(parsed)) {
+        setViewedQuestionIds(new Set(parsed.map(String)))
+      }
+    } catch (error) {
+      console.error('Failed to parse viewedQuestionIds from localStorage:', error)
+    }
+  }, [])
+
+  // 更新URL参数
+  const updateUrlParams = useCallback((updates: Record<string, string | number | null>) => {
+    const params = new URLSearchParams(searchParams.toString())
+    
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === undefined) {
+        params.delete(key)
+      } else {
+        // 空字符串也是有效值（表示"全部"），需要保留
+        params.set(key, String(value))
+      }
+    })
+    
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+  }, [router, pathname, searchParams])
+
+  // 保存已看过的题目到本地存储
+  const setViewedQuestionIdsToLocal = useCallback((questionIds: Set<string>) => {
+    if (typeof window === 'undefined') return
+    try {
+      window.localStorage.setItem('viewedQuestionIds', JSON.stringify(Array.from(questionIds)))
+    } catch (error) {
+      console.error('Failed to save viewedQuestionIds to localStorage:', error)
+    }
+  }, [])
 
   // 加载标签列表
   useEffect(() => {
@@ -99,9 +150,18 @@ export default function QuestionListPage() {
     return result
   }, [tags, total])
 
-  const handleRowClick = (record: Question) => {
+  const handleRowClick = useCallback((record: Question) => {
+    const questionId = String(record.tagPointId)
+    // 立即更新状态以显示视觉反馈
+    if (!viewedQuestionIds.has(questionId)) {
+      const next = new Set(viewedQuestionIds)
+      next.add(questionId)
+      // 先更新状态，再保存到本地存储
+      setViewedQuestionIds(next)
+      setViewedQuestionIdsToLocal(next)
+    }
     window.open(`/qa?id=${record.tagPointId}`)
-  }
+  }, [viewedQuestionIds, setViewedQuestionIdsToLocal])
 
   const columns: ColumnsType<Question> = [
     {
@@ -109,17 +169,27 @@ export default function QuestionListPage() {
       dataIndex: 'title',
       key: 'title',
       ellipsis: true,
-      render: (text: string, record: Question) => (
-        <a
-          onClick={(e) => {
-            e.preventDefault()
-            handleRowClick(record)
-          }}
-          style={{ cursor: 'pointer' }}
-        >
-          {text}
-        </a>
-      ),
+      render: (text: string, record: Question) => {
+        const isViewed = viewedQuestionIds.has(String(record.tagPointId))
+        return (
+          <Space>
+            {isViewed && <CheckCircleOutlined style={{ color: '#999', fontSize: '16px' }} />}
+            <a
+              onClick={(e) => {
+                e.preventDefault()
+                handleRowClick(record)
+              }}
+              style={{ 
+                cursor: 'pointer',
+                color: isViewed ? '#999' : undefined,
+                textDecoration: isViewed ? 'none' : undefined,
+              }}
+            >
+              {text}
+            </a>
+          </Space>
+        )
+      },
     },
     {
       title: '难度',
@@ -137,34 +207,60 @@ export default function QuestionListPage() {
   ]
 
   const handleExerciseCateChange = (e: any) => {
-    setExerciseCate(e.target.value)
+    updateUrlParams({
+      exerciseCate: e.target.value,
+      page: 1, // 切换筛选条件时重置到第一页
+    })
   }
 
   const handleTagChange = (e: any) => {
-    setTagId(e.target.value)
+    updateUrlParams({
+      tagId: e.target.value,
+      page: 1, // 切换筛选条件时重置到第一页
+    })
   }
 
   const handleSortChange = (value: string) => {
+    const updates: Record<string, string | number> = {}
+    
     if (value === 'default') {
-      setOrderBy('default')
-      setOrder('desc')
+      updates.orderBy = 'default'
+      updates.order = 'desc'
     } else if (value === 'updateTime-asc') {
-      setOrderBy('updateTime')
-      setOrder('asc')
+      updates.orderBy = 'updateTime'
+      updates.order = 'asc'
     } else if (value === 'updateTime-desc') {
-      setOrderBy('updateTime')
-      setOrder('desc')
+      updates.orderBy = 'updateTime'
+      updates.order = 'desc'
     } else if (value === 'level-asc') {
-      setOrderBy('level')
-      setOrder('asc')
+      updates.orderBy = 'level'
+      updates.order = 'asc'
     } else if (value === 'level-desc') {
-      setOrderBy('level')
-      setOrder('desc')
+      updates.orderBy = 'level'
+      updates.order = 'desc'
     }
+    
+    updateUrlParams(updates)
   }
 
   const handleDifficultyChange = (e: any) => {
-    setDifficulty(e.target.value)
+    updateUrlParams({
+      difficulty: e.target.value,
+      page: 1, // 切换筛选条件时重置到第一页
+    })
+  }
+
+  const handlePageChange = (page: number, size?: number) => {
+    if (size && size !== pageSize) {
+      updateUrlParams({
+        page: 1, // 改变每页条数时重置到第一页
+        pageSize: size,
+      })
+    } else {
+      updateUrlParams({
+        page: page,
+      })
+    }
   }
 
   const sortValue = useMemo(() => {
@@ -236,11 +332,18 @@ export default function QuestionListPage() {
           loading={loading}
           rowKey="tagPointId"
           size="small"
+          onRow={(record) => ({
+            onClick: () => handleRowClick(record),
+            style: { cursor: 'pointer' },
+          })}
           pagination={{
-            total,
-            pageSize: 10,
+            current: currentPage,
+            total: total,
+            pageSize: pageSize,
             showSizeChanger: true,
             showTotal: (total) => `共 ${total} 条`,
+            onChange: handlePageChange,
+            onShowSizeChange: handlePageChange,
           }}
         />
       </Card>
