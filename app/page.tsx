@@ -5,6 +5,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import MarkdownViewer from '@/components/MarkdownViewer'
 import TableOfContents from '@/components/TableOfContents'
+import SearchModal from '@/components/SearchModal'
 
 interface Tag {
   id: number
@@ -38,6 +39,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [activeHeadingId, setActiveHeadingId] = useState<string>('')
   const [readPointIds, setReadPointIds] = useState<Set<string>>(new Set())
+  const [searchModalVisible, setSearchModalVisible] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -189,7 +191,41 @@ export default function Home() {
     }
   }, [selectedPointId])
 
+  // 在你的组件内部
+  useEffect(() => {
+    const handleKeyDown = (event: any) => {
+      // 检查是否按下 Ctrl+F (Windows/Linux) 或 Cmd+F (Mac)
+      if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+        // 阻止浏览器默认的搜索框弹出
+        event.preventDefault();
+        
+        // 触发你的自定义弹窗
+        setSearchModalVisible(true);
+      }
+    };
 
+    // 监听键盘按下事件
+    window.addEventListener('keydown', handleKeyDown);
+
+    // 组件卸载时移除监听，防止内存泄漏和逻辑干扰
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []); // 空数组确保只在挂载时运行一次
+
+  // 获取当前选中的标签名称，用于面包屑
+  const currentTagName = useMemo(() => {
+    if (!selectedPointId) return '前端知识汇总'
+    const tag = tags.find(t => (t.pointList ?? []).some(point => String(point.tagPointId) === String(selectedPointId)))
+    return tag ? tag.tagName : '前端知识汇总'
+  }, [tags, selectedPointId])
+
+  // 处理搜索结果选择
+  const handleSearchResultSelect = useCallback((result: { tagPointId: number; title: string }) => {
+    if (result.tagPointId) {
+      handleSelectPoint(String(result.tagPointId))
+    }
+  }, [handleSelectPoint])
 
   return (
       <div className="container">
@@ -220,6 +256,12 @@ export default function Home() {
         content={markdownContent || ''}
         activeHeadingId={activeHeadingId}
         setActiveHeadingId={setActiveHeadingId}
+      />
+      <SearchModal
+        visible={searchModalVisible}
+        onClose={() => setSearchModalVisible(false)}
+        onSelectResult={handleSearchResultSelect}
+        tags={tags}
       />
     </div>
   )
