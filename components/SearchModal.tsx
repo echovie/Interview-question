@@ -183,9 +183,9 @@ export default function SearchModal({
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>推荐结果</h3>
             <div className={styles.resultsList}>
-              {recommendedResults.map((result) => (
+              {recommendedResults.map((result, index) => (
                 <div
-                  key={result.id}
+                  key={index}
                   className={styles.resultItem}
                   onClick={() => handleResultClick(result)}
                 >
@@ -209,9 +209,9 @@ export default function SearchModal({
               <div className={styles.loading}>搜索中...</div>
             ) : searchResults.length > 0 ? (
               <div className={styles.resultsList}>
-                {searchResults.map((result) => (
+                {searchResults.map((result, index) => (
                   <div
-                    key={result.id}
+                    key={index}
                     className={styles.resultItem}
                     onClick={() => handleResultClick(result)}
                   >
