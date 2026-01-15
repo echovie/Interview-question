@@ -14,8 +14,8 @@ export default function Home() {
   // 从 URL 参数中获取 id
   const pointId = searchParams.get('id')
 
-  // 记录已看过的题目到本地存储
-  useEffect(() => {
+  // 当滚动到底部时，标记为已读
+  const handleReachedEnd = () => {
     if (!pointId || typeof window === 'undefined') return
 
     try {
@@ -30,7 +30,7 @@ export default function Home() {
     } catch (error) {
       console.error('Failed to save viewed question to localStorage:', error)
     }
-  }, [pointId])
+  }
 
   // 根据 URL 中的 id 加载详情
   useEffect(() => {
@@ -61,6 +61,7 @@ export default function Home() {
           content={markdownContent || ''}
           loading={loading}
           onHeadingChange={setActiveHeadingId}
+          onReachedEnd={handleReachedEnd}
           hasPrev={false}
           hasNext={false}
         />

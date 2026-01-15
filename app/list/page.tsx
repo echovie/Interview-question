@@ -41,7 +41,7 @@ export default function QuestionListPage() {
   const pageSize = Number(searchParams.get('pageSize')) || 10
 
   // 从本地存储加载已看过的题目
-  useEffect(() => {
+  const loadViewedQuestionIds = useCallback(() => {
     if (typeof window === 'undefined') return
 
     const stored = window.localStorage.getItem('viewedQuestionIds')
@@ -56,6 +56,41 @@ export default function QuestionListPage() {
       console.error('Failed to parse viewedQuestionIds from localStorage:', error)
     }
   }, [])
+
+  // 初始加载
+  useEffect(() => {
+    loadViewedQuestionIds()
+  }, [loadViewedQuestionIds])
+
+  // 监听窗口焦点事件，当用户从详情页返回时重新加载已读状态
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleFocus = () => {
+      loadViewedQuestionIds()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [loadViewedQuestionIds])
+
+  // 监听 storage 事件（当其他标签页修改 localStorage 时）
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'viewedQuestionIds') {
+        loadViewedQuestionIds()
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+    }
+  }, [loadViewedQuestionIds])
 
   // 更新URL参数
   const updateUrlParams = useCallback((updates: Record<string, string | number | null>) => {
@@ -72,16 +107,6 @@ export default function QuestionListPage() {
     
     router.replace(`${pathname}?${params.toString()}`, { scroll: false })
   }, [router, pathname, searchParams])
-
-  // 保存已看过的题目到本地存储
-  const setViewedQuestionIdsToLocal = useCallback((questionIds: Set<string>) => {
-    if (typeof window === 'undefined') return
-    try {
-      window.localStorage.setItem('viewedQuestionIds', JSON.stringify(Array.from(questionIds)))
-    } catch (error) {
-      console.error('Failed to save viewedQuestionIds to localStorage:', error)
-    }
-  }, [])
 
   // 加载标签列表
   useEffect(() => {
@@ -151,17 +176,10 @@ export default function QuestionListPage() {
   }, [tags, total])
 
   const handleRowClick = useCallback((record: Question) => {
-    const questionId = String(record.tagPointId)
-    // 立即更新状态以显示视觉反馈
-    if (!viewedQuestionIds.has(questionId)) {
-      const next = new Set(viewedQuestionIds)
-      next.add(questionId)
-      // 先更新状态，再保存到本地存储
-      setViewedQuestionIds(next)
-      setViewedQuestionIdsToLocal(next)
-    }
+    // 只打开新窗口，不在这里标记为已读
+    // 已读标记应该在详情页滚动到底部时才进行
     window.open(`/qa?id=${record.tagPointId}`)
-  }, [viewedQuestionIds, setViewedQuestionIdsToLocal])
+  }, [])
 
   const columns: ColumnsType<Question> = [
     {
@@ -177,6 +195,7 @@ export default function QuestionListPage() {
             <a
               onClick={(e) => {
                 e.preventDefault()
+                e.stopPropagation() // 阻止事件冒泡，避免触发表格行的点击事件
                 handleRowClick(record)
               }}
               style={{ 
@@ -332,10 +351,6 @@ export default function QuestionListPage() {
           loading={loading}
           rowKey="tagPointId"
           size="small"
-          onRow={(record) => ({
-            onClick: () => handleRowClick(record),
-            style: { cursor: 'pointer' },
-          })}
           pagination={{
             current: currentPage,
             total: total,
