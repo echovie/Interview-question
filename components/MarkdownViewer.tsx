@@ -49,84 +49,84 @@ function MarkdownViewer({
       .trim()
   }
 
-  useEffect(() => {
-    // 延迟执行，确保 DOM 已渲染
-    const timer = setTimeout(() => {
-      // 为所有标题添加 id（处理重复标题）
-      if (containerRef.current) {
-        const headings = containerRef.current.querySelectorAll('h1, h2, h3, h4, h5, h6')
-        const idCountMap = new Map<string, number>()
-        
-        headings.forEach((heading) => {
-          if (!heading.id) {
-            const text = heading.textContent || ''
-            const baseId = generateHeadingId(text)
-            
-            // 处理重复的标题ID，为重复的标题添加序号
-            const count = idCountMap.get(baseId) || 0
-            let id = baseId
-            if (count > 0) {
-              id = `${baseId}-${count}`
-            }
-            idCountMap.set(baseId, count + 1)
-            
-            heading.id = id
+  setTimeout(() => {
+    // 为所有标题添加 id（处理重复标题）
+    if (containerRef.current) {
+      const headings = containerRef.current.querySelectorAll('h1, h2, h3, h4, h5, h6')
+      const idCountMap = new Map<string, number>()
+      
+      headings.forEach((heading) => {
+        if (!heading.id) {
+          const text = heading.textContent || ''
+          const baseId = generateHeadingId(text)
+          
+          // 处理重复的标题ID，为重复的标题添加序号
+          const count = idCountMap.get(baseId) || 0
+          let id = baseId
+          if (count > 0) {
+            id = `${baseId}-${count}`
           }
-        })
-      }
+          idCountMap.set(baseId, count + 1)
 
-      // 设置 Intersection Observer 来监听标题滚动
-      if (containerRef.current) {
-        const headings = containerRef.current.querySelectorAll('h1, h2, h3, h4, h5, h6')
-        
-        if (observerRef.current) {
-          observerRef.current.disconnect()
+          heading.setAttribute('data-heading-id', id)
         }
-
-        observerRef.current = new IntersectionObserver(
-          (entries) => {
-            // 找到所有可见的标题
-            const visibleEntries = entries.filter(e => e.isIntersecting && e.target.id)
-            
-            if (visibleEntries.length > 0) {
-              // 按位置排序，选择最接近顶部且在视口内的标题
-              visibleEntries.sort((a, b) => {
-                const aTop = a.boundingClientRect.top
-                const bTop = b.boundingClientRect.top
-                // 优先选择在视口上半部分的标题
-                if (aTop < 150 && bTop >= 150) return -1
-                if (aTop >= 150 && bTop < 150) return 1
-                return aTop - bTop
-              })
-              
-              const topEntry = visibleEntries[0]
-              if (topEntry.target.id) {
-                onHeadingChange(topEntry.target.id)
-              }
-            }
-          },
-          {
-            root: containerRef.current,
-            rootMargin: '-100px 0px -60% 0px',
-            threshold: [0, 0.25, 0.5, 0.75, 1],
-          }
-        )
-
-        headings.forEach((heading) => {
-          if (heading.id) {
-            observerRef.current?.observe(heading)
-          }
-        })
-      }
-    }, 100)
-
-    return () => {
-      clearTimeout(timer)
-      if (observerRef.current) {
-        observerRef.current.disconnect()
-      }
+      })
     }
-  }, [content, onHeadingChange])
+
+    // 设置 Intersection Observer
+    if (containerRef.current) {
+      const headings = containerRef.current.querySelectorAll('h1, h2, h3, h4, h5, h6');
+
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+
+      // 使用 Map 存储所有标题的相交状态，避免只依赖 entries 增量更新导致的信息缺失
+      const headingState = new Map();
+
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          // 1. 更新所有被观察标题的状态
+          entries.forEach((entry) => {
+            headingState.set(entry.target, entry);
+          });
+
+          // 2. 找出当前所有在视口内的标题
+          const visibleHeadings = Array.from(headingState.values())
+            .filter(entry => entry.isIntersecting);
+
+          if (visibleHeadings.length > 0) {
+            // 3. 核心逻辑：找到距离“激活线”（比如距离顶部 100px 处）最近的标题
+            // 我们寻找 boundingClientRect.top 最小但非负（或最接近设定阈值）的元素
+            const closest = visibleHeadings.reduce((prev, curr) => {
+              const prevTop = Math.abs(prev.boundingClientRect.top - 100);
+              const currTop = Math.abs(curr.boundingClientRect.top - 100);
+              return currTop < prevTop ? curr : prev;
+            });
+
+            const id = closest.target.getAttribute('data-heading-id');
+            if (id) {
+              onHeadingChange(id);
+            }
+          }
+        },
+        {
+          // 建议 root 设为 null (视口)，或者明确的滚动容器
+          root: null, 
+          // rootMargin 顶部负值可以缩小“判定区域”，让激活更灵敏
+          rootMargin: '-80px 0px -70% 0px',
+          threshold: [0, 1],
+        }
+      );
+
+      headings.forEach((heading) => {
+        // 确保有 ID 且被观察
+        if (heading.getAttribute('data-heading-id')) {
+          observerRef.current?.observe(heading);
+        }
+      });
+    }
+  }, 500)
 
   useEffect(() => {
     hasReachedBottomRef.current = false

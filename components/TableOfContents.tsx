@@ -69,7 +69,7 @@ export default function TableOfContents({
   }, [content])
 
   const scrollToHeading = (id: string) => {
-    const element = document.getElementById(id)
+    const element = document.querySelector(`[data-heading-id="${id}"]`)
     setActiveHeadingId(id)
 
     element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
