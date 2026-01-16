@@ -40,8 +40,8 @@ export default function Home() {
         .then(res => res.json())
         .then(data => {
           if (data.code === 0) {
-            const { title, explanation, testPoint } = data.data.detail || {}
-            setMarkdownContent(`# ${title}\n\n${explanation}`)
+            const { title, desc, explanation } = data.data.detail || {}
+            setMarkdownContent(`# ${title}\n\n${desc}\n\n${explanation}`)
           }
           setLoading(false)
         })
